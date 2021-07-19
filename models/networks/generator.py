@@ -56,7 +56,7 @@ class ASAPNetsGenerator(BaseNetwork):
         """Creates a lowres version of the input."""
         device = self.use_gpu()
         if(self.learned_ds_factor != self.downsampling):
-            myds = BilinearDownsample(int(self.downsampling//self.learned_ds_factor), self.num_inputs,device)
+            myds = BilinearDownsample(int(self.downsampling//self.learned_ds_factor), self.num_inputs, device)
             return myds(im)
         else:
             return im
@@ -65,6 +65,8 @@ class ASAPNetsGenerator(BaseNetwork):
         lowres = self.get_lowres(highres)
         lr_features = self.lowres_stream(lowres)
         output = self.highres_stream(highres, lr_features)
+        #print(output.shape) torch.Size([4, 3, 256, 256])
+
         return output, lr_features#, lowres
 
 

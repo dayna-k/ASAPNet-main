@@ -47,37 +47,51 @@ def get_params(opt, size):
     return {'crop_pos': (x, y), 'flip': flip}
 
 
-def get_transform(opt, params, method=Image.BICUBIC, normalize=True, toTensor=True):
+def get_transform(opt, params, method=Image.BICUBIC, normalize=True, toTensor=True, RGB=True):
     transform_list = []
     if 'resize' in opt.preprocess_mode:
+        print("resize")
         osize = [opt.load_size, opt.load_size]
         transform_list.append(transforms.Resize(osize, interpolation=method))
     elif 'scale_width' in opt.preprocess_mode:
+        #print("resize")
         transform_list.append(transforms.Lambda(lambda img: __scale_width(img, opt.load_size, method)))
     elif 'scale_shortside' in opt.preprocess_mode:
+        #print("resize")
         transform_list.append(transforms.Lambda(lambda img: __scale_shortside(img, opt.load_size, method)))
 
     if 'crop' in opt.preprocess_mode:
+        #print("resize")
         transform_list.append(transforms.Lambda(lambda img: __crop(img, params['crop_pos'], opt.crop_size)))
 
     if opt.preprocess_mode == 'none':
+        #print("none")
         base = 32
-        transform_list.append(transforms.Lambda(lambda img: __make_power_2(img, base, method)))
+        # transform_list.append(transforms.Lambda(lambda img: __make_power_2(img, base, method)))
+        transform_list.append(transforms.Lambda(lambda img: img))
 
     if opt.preprocess_mode == 'fixed':
+        #print("fixed")
         w = opt.crop_size
         h = round(opt.crop_size / opt.aspect_ratio)
         transform_list.append(transforms.Lambda(lambda img: __resize(img, w, h, method)))
 
     if opt.isTrain and not opt.no_flip:
+        #print("NOT no_flip")
         transform_list.append(transforms.Lambda(lambda img: __flip(img, params['flip'])))
 
     if toTensor:
+        #print("toTensor")
         transform_list += [transforms.ToTensor()]
 
     if normalize:
-        transform_list += [transforms.Normalize((0.5, 0.5, 0.5),
-                                                (0.5, 0.5, 0.5))]
+        if RGB:
+            #print("normalize")
+            transform_list += [transforms.Normalize((0.5, 0.5, 0.5),
+                                                    (0.5, 0.5, 0.5))]
+        else:
+            transform_list += [transforms.Normalize((0.5),
+                                                    (0.5))]
     return transforms.Compose(transform_list)
 
 
