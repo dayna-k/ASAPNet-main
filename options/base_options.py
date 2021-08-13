@@ -19,7 +19,7 @@ class BaseOptions():
 
     def initialize(self, parser):
         # experiment specifics
-        parser.add_argument('--name', type=str, default='SAR0716', help='name of the experiment. It decides where to store samples and models')
+        parser.add_argument('--name', type=str, default='SAR0723', help='name of the experiment. It decides where to store samples and models')
 
         parser.add_argument('--gpu_ids', type=str, default='0, 1', help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU')
         parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints', help='models are saved here')
@@ -41,7 +41,7 @@ class BaseOptions():
 
         # for setting inputs
         parser.add_argument('--dataroot', type=str, default='./datasets/cityscapes/')
-        parser.add_argument('--dataset_mode', type=str, default='coco')
+        parser.add_argument('--dataset_mode', type=str, default='SAR')
         parser.add_argument('--serial_batches', action='store_true', help='if true, takes images in order to make batches, otherwise takes them randomly')
         parser.add_argument('--no_flip', action='store_true', help='if specified, do not flip the images for data argumentation')
         parser.add_argument('--nThreads', default=0, type=int, help='# threads for loading data')
@@ -55,7 +55,7 @@ class BaseOptions():
 
         # ASAPNets parameters
         parser.add_argument('--learned_ds', action='store_true', help='model learns the downsampling')
-        parser.add_argument('--learned_ds_factor', type=int, default=16, help='enables partial learned_ds (S2 in sec. 3.2)')
+        parser.add_argument('--learned_ds_factor', type=int, default=4, help='enables partial learned_ds (S2 in sec. 3.2)')
         parser.add_argument('--lr_width', type=int, default=64, help='low res stream strided conv number of channles')
         parser.add_argument('--lr_max_width', type=int, default=1024, help='low res stream conv number of channles')
         parser.add_argument('--lr_depth', type=int, default=7, help='low res stream number of conv layers')

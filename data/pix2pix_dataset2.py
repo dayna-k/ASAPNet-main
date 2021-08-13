@@ -69,6 +69,7 @@ class Pix2pixDataset(BaseDataset):
         # Label Image
         label_path = self.label_paths[index]
         label = Image.open(label_path).convert('L')
+        label = label.resize((256, 256))
         #print(type(label))
         #label = tifffile.imread(label_path)
         #label = label.astype(np.float32)
@@ -117,7 +118,8 @@ class Pix2pixDataset(BaseDataset):
         # image = Image.open(image_path)
         #image.save('%s.jpg'%image_path[:-4],'JPEG')
         # image = image.convert('RGB')
-        image = Image.open(image_path)
+        image = Image.open(image_path).convert('RGB')
+        image = image.resize((256, 256))
 
         #image = tifffile.imread(image)
         #image = image.astype(np.float32)

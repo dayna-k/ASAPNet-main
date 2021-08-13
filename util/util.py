@@ -9,6 +9,7 @@ import torch
 from argparse import Namespace
 import numpy as np
 from PIL import Image
+import tifffile
 import os
 import argparse
 import dill as pickle
@@ -62,7 +63,21 @@ def tile_images(imgs, picturesPerRow=4):
 
 # Converts a Tensor into a Numpy array
 # |imtype|: the desired type of the converted numpy array
-def tensor2im(image_tensor, imtype=np.uint8, normalize=True, tile=False):
+def tensor2im(input_image, imtype=np.uint16, normalize=True, tile=False):
+    if not isinstance(input_image, np.ndarray):
+        if isinstance(input_image, torch.Tensor):  # get the data from a variable
+            image_tensor = input_image.data
+        else:
+            return input_image
+        image_numpy = image_tensor[0].cpu().float().numpy()  # convert it into a numpy array
+        if image_numpy.shape[0] == 1:  # grayscale to RGB
+            image_numpy = np.tile(image_numpy, (3, 1, 1))
+        image_numpy = (np.transpose(image_numpy, (1, 2, 0)) + 1) / 2.0 * (256*256.0 -1.0)  # post-processing: tranpose and scaling
+    else:  # if it is a numpy array, do nothing
+        image_numpy = input_image
+    return image_numpy.astype(imtype)
+
+    """
     if isinstance(image_tensor, list):
         image_numpy = []
         for i in range(len(image_tensor)):
@@ -94,7 +109,7 @@ def tensor2im(image_tensor, imtype=np.uint8, normalize=True, tile=False):
     if image_numpy.shape[2] == 1:
         image_numpy = image_numpy[:, :, 0]
     return image_numpy.astype(imtype)
-
+    """
 
 # Converts a one-hot tensor into a colorful label map
 def tensor2label(label_tensor, n_label, imtype=np.uint8, tile=False):
@@ -127,6 +142,7 @@ def tensor2label(label_tensor, n_label, imtype=np.uint8, tile=False):
 
 
 def save_image(image_numpy, image_path, create_dir=False):
+    """
     if create_dir:
         os.makedirs(os.path.dirname(image_path), exist_ok=True)
     if len(image_numpy.shape) == 2:
@@ -137,8 +153,62 @@ def save_image(image_numpy, image_path, create_dir=False):
 
     # save to png
     image_pil.save(image_path.replace('.jpg', '.png'))
+    """
+    print("save image")
+    image_pil = image_numpy
+    image_pil = Image.fromarray(image_pil)
+    #h, w, _ = image_numpy.shape
+    #
+    # if aspect_ratio > 1.0:
+    #     image_pil = image_pil.resize((h, int(w * aspect_ratio)), Image.BICUBIC)
+    # if aspect_ratio < 1.0:
+    #     image_pil = image_pil.resize((int(h / aspect_ratio), w), Image.BICUBIC)
+    # image_pil.save(image_path)
+    image_pil.save(image_path)
+    #tifffile.imwrite(image_path, image_pil)
 
 
+def map_uint16_to_uint8(img, lower_bound=None, upper_bound=None):
+    '''
+    Map a 16-bit image trough a lookup table to convert it to 8-bit.
+
+    Parameters
+    ----------
+    img: numpy.ndarray[np.uint16]
+        image that should be mapped
+    lower_bound: int, optional
+        lower bound of the range that should be mapped to ``[0, 255]``,
+        value must be in the range ``[0, 65535]`` and smaller than `upper_bound`
+        (defaults to ``numpy.min(img)``)
+    upper_bound: int, optional
+       upper bound of the range that should be mapped to ``[0, 255]``,
+       value must be in the range ``[0, 65535]`` and larger than `lower_bound`
+       (defaults to ``numpy.max(img)``)
+
+    Returns
+    -------
+    numpy.ndarray[uint8]
+    '''
+    if not(0 <= lower_bound < 2**16) and lower_bound is not None:
+        raise ValueError(
+            '"lower_bound" must be in the range [0, 65535]')
+    if not(0 <= upper_bound < 2**16) and upper_bound is not None:
+        raise ValueError(
+            '"upper_bound" must be in the range [0, 65535]')
+    if lower_bound is None:
+        lower_bound = np.min(img)
+    if upper_bound is None:
+        upper_bound = np.max(img)
+    if lower_bound >= upper_bound:
+        raise ValueError(
+            '"lower_bound" must be smaller than "upper_bound"')
+    lut = np.concatenate([
+        np.zeros(lower_bound, dtype=np.uint16),
+        np.linspace(0, 255, upper_bound - lower_bound).astype(np.uint16),
+        np.ones(2**16 - upper_bound, dtype=np.uint16) * 255
+    ])
+    return lut[img].astype(np.uint8)
+    
 def mkdirs(paths):
     if isinstance(paths, list) and not isinstance(paths, str):
         for path in paths:

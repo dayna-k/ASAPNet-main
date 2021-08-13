@@ -8,6 +8,8 @@ import ntpath
 import time
 from . import util
 from PIL import Image
+import tifffile
+import imageio
 from . import html
 import scipy.misc
 try:
@@ -69,16 +71,19 @@ class Visualizer():
             for label, image_numpy in visuals.items():
                 if isinstance(image_numpy, list):
                     for i in range(len(image_numpy)):
-                        
-                        img_path = os.path.join(self.img_dir, 'epoch%.3d_iter%.3d_%s_%d.png' % (epoch, step, label, i))
+                        print("save image list")
+                        img_path = os.path.join(self.img_dir, 'epoch%.3d_iter%.3d_%s_%d.tif' % (epoch, step, label, i))
                         util.save_image(image_numpy[i], img_path)
                 else:
+                    
                     img_path = os.path.join(self.img_dir, 'epoch%.3d_iter%.3d_%s.png' % (epoch, step, label))
-                    #print(type(image_numpy))
                     #print(image_numpy.shape)
-                    #if len(image_numpy.shape) >= 4:
-                    #    image_numpy = image_numpy[0]
-                    #
+                    image_numpy = (image_numpy/256).astype('uint8')
+                    image_numpy = Image.fromarray(image_numpy)
+                    image_numpy.save(img_path[:-4]+".png")
+                    
+                    #image_numpy = (image_numpy/256).astype('uint8')
+                    """
                     image_numpy0 = image_numpy[0]
                     image_numpy0 = Image.fromarray(image_numpy0)
                     image_numpy0.save(img_path[:-4]+"_0"+".png")
@@ -91,7 +96,7 @@ class Visualizer():
                     image_numpy3 = image_numpy[3]
                     image_numpy3 = Image.fromarray(image_numpy3)
                     image_numpy3.save(img_path[:-4]+"_3"+".png")
-
+                    """
                     #util.save_image(image_numpy, img_path)
 
 

@@ -29,7 +29,7 @@ class SARDataset(Pix2pixDataset):
 
     def get_paths(self, opt):
         root = opt.dataroot
-        phase = 'test' if opt.phase == 'test-png' else 'TRAIN-png'
+        phase = 'test' if opt.phase == 'test' else 'TRAIN'
         #phase = 'val' if opt.phase == 'test' else opt.phase
 
         label_dir = os.path.join(root, '%s/A' % phase)

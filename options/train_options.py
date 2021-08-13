@@ -10,7 +10,7 @@ class TrainOptions(BaseOptions):
     def initialize(self, parser):
         BaseOptions.initialize(self, parser)
         # for displays
-        parser.add_argument('--display_freq', type=int, default=1000, help='frequency of showing training results on screen')
+        parser.add_argument('--display_freq', type=int, default=5000, help='frequency of showing training results on screen')
         parser.add_argument('--print_freq', type=int, default=100, help='frequency of showing training results on console')
         parser.add_argument('--save_latest_freq', type=int, default=5000, help='frequency of saving the latest results')
         parser.add_argument('--save_epoch_freq', type=int, default=10, help='frequency of saving checkpoints at the end of epochs')
@@ -21,8 +21,8 @@ class TrainOptions(BaseOptions):
         # for training
         parser.add_argument('--continue_train', action='store_true', help='continue training: load the latest model')
         parser.add_argument('--which_epoch', type=str, default='latest', help='which epoch to load? set to latest to use latest cached model')
-        parser.add_argument('--niter', type=int, default=200, help='# of iter at starting learning rate. This is NOT the total #epochs. Total #epochs is niter + niter_decay')
-        parser.add_argument('--niter_decay', type=int, default=100, help='# of iter to linearly decay learning rate to zero')
+        parser.add_argument('--niter', type=int, default=30, help='# of iter at starting learning rate. This is NOT the total #epochs. Total #epochs is niter + niter_decay')
+        parser.add_argument('--niter_decay', type=int, default=60, help='# of iter to linearly decay learning rate to zero')
         parser.add_argument('--optimizer', type=str, default='adam')
         parser.add_argument('--beta1', type=float, default=0.0, help='momentum term of adam')
         parser.add_argument('--beta2', type=float, default=0.9, help='momentum term of adam')

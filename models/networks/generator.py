@@ -99,7 +99,7 @@ def _get_coords(bs, h, w, device, ds, coords_type):
 
 class ASAPNetsLRStream(th.nn.Sequential):
     """Convolutional LR stream to estimate the pixel-wise MLPs parameters"""
-    def __init__(self, num_in, num_out, norm_layer, width=64, max_width=1024, depth=7, learned_ds_factor=16,
+    def __init__(self, num_in, num_out, norm_layer, width=64, max_width=1024, depth=7, learned_ds_factor=4,
                  reflection_pad=False, replicate_pad=False):
         super(ASAPNetsLRStream, self).__init__()
 
