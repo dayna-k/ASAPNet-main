@@ -26,13 +26,14 @@ class Pix2PixModel(torch.nn.Module):
 
         # set loss functions
         if opt.isTrain:
-            self.criterionGAN = networks.GANLoss(
-                opt.gan_mode, tensor=self.FloatTensor, opt=self.opt)
+            self.criterionGAN = networks.GANLoss(opt.gan_mode, tensor=self.FloatTensor, opt=self.opt)
             self.criterionFeat = torch.nn.L1Loss()
             if opt.MSE_loss:
                 self.criterionMSE = torch.nn.MSELoss()
             if opt.L1_loss:
                 self.criterionL1 = torch.nn.L1Loss()
+            if opt.SE_loss:
+                self.criterionSE = networks.SELoss()
             if not opt.no_vgg_loss:
                 self.criterionVGG = networks.VGGLoss(self.opt.gpu_ids)
             if opt.use_vae:
@@ -48,12 +49,10 @@ class Pix2PixModel(torch.nn.Module):
         input_semantics, real_image = self.preprocess_input(data)
 
         if mode == 'generator':
-            g_loss, generated = self.compute_generator_loss(
-                input_semantics, real_image)
+            g_loss, generated = self.compute_generator_loss(input_semantics, real_image)
             return g_loss, generated
         elif mode == 'discriminator':
-            d_loss = self.compute_discriminator_loss(
-                input_semantics, real_image)
+            d_loss = self.compute_discriminator_loss(input_semantics, real_image)
             return d_loss
         elif mode == 'encode_only':
             z, mu, logvar = self.encode_z(real_image)
@@ -147,17 +146,16 @@ class Pix2PixModel(torch.nn.Module):
     def compute_generator_loss(self, input_semantics, real_image):
         G_losses = {}
 
-        fake_image, lr_features, KLD_loss = self.generate_fake(
-            input_semantics, real_image, compute_kld_loss=self.opt.use_vae)
+        fake_image, lr_features, KLD_loss = self.generate_fake(input_semantics, real_image, compute_kld_loss=self.opt.use_vae)
 
         if self.opt.use_vae:
             G_losses['KLD'] = KLD_loss
 
-        pred_fake, pred_real = self.discriminate(
-            input_semantics, fake_image, real_image)
+        pred_fake, pred_real, pred_fake_edge, pred_real_edge = self.discriminate(input_semantics, fake_image, real_image)
 
         if not self.opt.no_adv_loss:
             G_losses['GAN'] = self.criterionGAN(pred_fake, True, for_discriminator=False)
+            G_losses['GAN_edge'] = self.criterionGAN(pred_fake_edge, True, for_discriminator=False)
 
         if not self.opt.no_ganFeat_loss:
             num_D = len(pred_fake)
@@ -181,6 +179,9 @@ class Pix2PixModel(torch.nn.Module):
         if self.opt.L1_loss:
             G_losses['L1'] = self.criterionL1(fake_image, real_image) \
                 * self.opt.lambda_L1
+        if self.opt.SE_loss:
+            G_losses['SE'] = self.criterionSE(fake_image, real_image) \
+                * self.opt.lambda_SE
         if self.opt.use_weight_decay:
             lr_features_l2 = lr_features.norm(p=2)
             device = lr_features_l2.device
@@ -197,13 +198,12 @@ class Pix2PixModel(torch.nn.Module):
             fake_image = fake_image.detach()
             fake_image.requires_grad_()
 
-        pred_fake, pred_real = self.discriminate(
-            input_semantics, fake_image, real_image)
+        pred_fake, pred_real, pred_fake_edge, pred_real_edge = self.discriminate(input_semantics, fake_image, real_image)
 
-        D_losses['D_Fake'] = self.criterionGAN(pred_fake, False,
-                                               for_discriminator=True)
-        D_losses['D_real'] = self.criterionGAN(pred_real, True,
-                                               for_discriminator=True)
+        D_losses['D_Fake'] = self.criterionGAN(pred_fake, False, for_discriminator=True)
+        D_losses['D_real'] = self.criterionGAN(pred_real, True, for_discriminator=True)
+        D_losses['D_Fake_edge'] = self.criterionGAN(pred_fake_edge, False, for_discriminator=True)
+        D_losses['D_real_edge'] = self.criterionGAN(pred_real_edge, True, for_discriminator=True)
 
         return D_losses
 
@@ -242,25 +242,38 @@ class Pix2PixModel(torch.nn.Module):
 
         discriminator_out = self.netD(fake_and_real)
 
-        pred_fake, pred_real = self.divide_pred(discriminator_out)
+        pred_fake, pred_real, pred_fake_edge, pred_real_edge = self.divide_pred(discriminator_out)
 
-        return pred_fake, pred_real
+        return pred_fake, pred_real, pred_fake_edge, pred_real_edge
 
     # Take the prediction of fake and real images from the combined batch
     def divide_pred(self, pred):
         # the prediction contains the intermediate outputs of multiscale GAN,
         # so it's usually a list
-        if type(pred) == list:
+        pred_0 = pred[0]
+        pred_1 = pred[1]
+
+        if type(pred_0) == list:
             fake = []
             real = []
-            for p in pred:
+            fake_edge = []
+            real_edge = []
+            for p in pred_0:
+                #print(p)
                 fake.append([tensor[:tensor.size(0) // 2] for tensor in p])
                 real.append([tensor[tensor.size(0) // 2:] for tensor in p])
+            for p_1 in pred_1:
+                #print(p)
+                fake_edge.append([tensor[:tensor.size(0) // 2] for tensor in p_1])
+                real_edge.append([tensor[tensor.size(0) // 2:] for tensor in p_1])
         else:
-            fake = pred[:pred.size(0) // 2]
-            real = pred[pred.size(0) // 2:]
+            fake = pred_0[:pred_0.size(0) // 2]
+            real = pred_0[pred_0.size(0) // 2:]
 
-        return fake, real
+            fake_edge = pred_1[:pred_1.size(0) // 2]
+            real_edge = pred_1[pred_1.size(0) // 2:]
+
+        return fake, real, fake_edge, real_edge
 
     def get_edges(self, t):
         #edge = self.ByteTensor(t.size()).zero_()

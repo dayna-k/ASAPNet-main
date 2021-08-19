@@ -118,3 +118,25 @@ class VGGLoss(nn.Module):
 class KLDLoss(nn.Module):
     def forward(self, mu, logvar):
         return -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+
+# shift edge invariant loss
+class SELoss(nn.Module):
+    def __init__(self):
+        super(SELoss, self).__init__()
+        self.criterionL1 = torch.nn.L1Loss()
+
+    def forward(self, fake, real):
+        fake_0 = fake
+        fake_1 = torch.roll(fake,1,2)
+        fake_2 = torch.roll(fake,-1,2)
+        fake_3 = torch.roll(fake,2,2)
+        fake_4 = torch.roll(fake,-2,2)
+        fake_5 = torch.roll(fake,1,3)
+        fake_6 = torch.roll(fake,-1,3)
+        fake_7 = torch.roll(fake,2,3)
+        fake_8 = torch.roll(fake,-2,3)
+
+        fake_B = torch.cat([fake_1, fake_2, fake_3, fake_4, fake_5, fake_6, fake_7, fake_8], 0)
+        real_B = torch.cat([real]*8,0)
+
+        return self.criterionL1(fake_B, real_B)

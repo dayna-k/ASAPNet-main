@@ -42,15 +42,17 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--lambda_vgg', type=float, default=10.0, help='weight for vgg loss')
         parser.add_argument('--lambda_MSE', type=float, default=10.0, help='weight for MSE loss')
         parser.add_argument('--lambda_L1', type=float, default=100.0, help='weight for L1 loss')
+        parser.add_argument('--lambda_SE', type=float, default=10.0, help='weight for shift invariant edge loss')
         parser.add_argument('--lambda_WD', type=float, default=1e-8, help='weight WD loss')
         parser.add_argument('--no_adv_loss', action='store_true', help='if specified, do *not* use discriminator feature matching loss')
         parser.add_argument('--no_ganFeat_loss', action='store_true', help='if specified, do *not* use discriminator feature matching loss')
         parser.add_argument('--no_vgg_loss', action='store_true', help='if specified, do *not* use VGG feature matching loss')
         parser.add_argument('--MSE_loss', action='store_true', help='if specified, use MSE loss')
         parser.add_argument('--L1_loss', action='store_true', help='if specified, use L1 loss')
+        parser.add_argument('--SE_loss', default = True, action='store_true', help='if specified, use shift invariant edge loss')
         parser.add_argument('--use_weight_decay', action='store_true', help='if specified, use weight decay loss on the estimated parameters from LR')
         parser.add_argument('--gan_mode', type=str, default='hinge', help='(ls|original|hinge)')
-        parser.add_argument('--netD', type=str, default='multiscale', help='(n_layers|multiscale|image)')
+        parser.add_argument('--netD', type=str, default='multiscaleedge', help='(n_layers|multiscale|image)')
         parser.add_argument('--lambda_kld', type=float, default=0.05)
         self.isTrain = True
         return parser
