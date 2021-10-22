@@ -64,15 +64,18 @@ def tile_images(imgs, picturesPerRow=4):
 # Converts a Tensor into a Numpy array
 # |imtype|: the desired type of the converted numpy array
 def tensor2im(input_image, imtype=np.uint16, normalize=True, tile=False):
+    #print(input_image.shape): (3, 256, 256)
     if not isinstance(input_image, np.ndarray):
         if isinstance(input_image, torch.Tensor):  # get the data from a variable
             image_tensor = input_image.data
+            #print(image_tensor.shape): (3, 256, 256)
         else:
             return input_image
-        image_numpy = image_tensor[0].cpu().float().numpy()  # convert it into a numpy array
+        image_numpy = image_tensor.cpu().float().numpy()  # convert it into a numpy array
         if image_numpy.shape[0] == 1:  # grayscale to RGB
             image_numpy = np.tile(image_numpy, (3, 1, 1))
-        image_numpy = (np.transpose(image_numpy, (1, 2, 0)) + 1) / 2.0 * (256*256.0 -1.0)  # post-processing: tranpose and scaling
+        #print(image_numpy.shape) (3, 256, 256)
+        image_numpy = (np.transpose(image_numpy, (1, 2, 0)) + 1) / 2.0 * (2**8 -1.0)  # post-processing: tranpose and scaling
     else:  # if it is a numpy array, do nothing
         image_numpy = input_image
     return image_numpy.astype(imtype)
@@ -154,9 +157,17 @@ def save_image(image_numpy, image_path, create_dir=False):
     # save to png
     image_pil.save(image_path.replace('.jpg', '.png'))
     """
-    print("save image")
+    #print("save image")
     image_pil = image_numpy
-    image_pil = Image.fromarray(image_pil)
+    ##print(image_pil.shape) (256, 256, 3)
+    ##image_pil = Image.fromarray(image_pil.squeeze())
+    #image_pil = Image.fromarray(np.uint8(image_pil))
+
+    image_numpy = (image_numpy).astype('uint8')
+    image_numpy = Image.fromarray(image_numpy)
+    #image_numpy.save(img_path[:-4]+".png")
+    
+    
     #h, w, _ = image_numpy.shape
     #
     # if aspect_ratio > 1.0:
@@ -164,7 +175,8 @@ def save_image(image_numpy, image_path, create_dir=False):
     # if aspect_ratio < 1.0:
     #     image_pil = image_pil.resize((int(h / aspect_ratio), w), Image.BICUBIC)
     # image_pil.save(image_path)
-    image_pil.save(image_path)
+    #print("image_path: ", image_path)
+    image_numpy.save(image_path)
     #tifffile.imwrite(image_path, image_pil)
 
 

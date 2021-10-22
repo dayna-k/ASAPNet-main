@@ -46,7 +46,7 @@ def test(opt):
             time_total += f_time
         print("time_%d:%f"%(i,f_time))
         print(torch.cuda.max_memory_allocated(device=None))
-
+        print("time_total_%d:%f"%(i,f_time))
         img_path = data_i['path']
         for b in range(generated.shape[0]):
             print('process image... %s' % img_path[b])

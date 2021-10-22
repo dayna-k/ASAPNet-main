@@ -16,7 +16,7 @@ class SARDataset(Pix2pixDataset):
         parser.set_defaults(dataroot='D:/Dataset/KOMPSAT5/')
         # D:/Dataset/KOMPSAT5/TRAINA/A
         parser.set_defaults(preprocess_mode='none')
-        load_size = 256 if is_train else 256
+        load_size = 256
         parser.set_defaults(load_size=load_size)
         parser.set_defaults(crop_size=256)
         parser.set_defaults(display_winsize=256)
@@ -29,13 +29,14 @@ class SARDataset(Pix2pixDataset):
 
     def get_paths(self, opt):
         root = opt.dataroot
-        phase = 'test' if opt.phase == 'test' else 'TRAIN'
+        phase = 'test-2' if opt.phase == 'test' else 'TRAIN'
+        #phase = 'test' if opt.phase == 'test' else 'TRAIN'
         #phase = 'val' if opt.phase == 'test' else opt.phase
 
-        label_dir = os.path.join(root, '%s/A' % phase)
+        label_dir = os.path.join(root, '%s/TestA' % phase)
         label_paths = make_dataset(label_dir, recursive=False, read_cache=True)
 
-        image_dir = os.path.join(root, '%s/B' % phase)
+        image_dir = os.path.join(root, '%s/TestB' % phase)
         image_paths = make_dataset(image_dir, recursive=False, read_cache=True)
 
         instance_paths = []

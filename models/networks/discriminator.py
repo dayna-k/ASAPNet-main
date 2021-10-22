@@ -50,7 +50,7 @@ class MultiscaleDiscriminator(BaseNetwork):
         get_intermediate_features = not self.opt.no_ganFeat_loss
         #print(self.named_children())
         for name, D in self.named_children():
-            print(name)
+            #print(name)
             out = D(input)
             if not get_intermediate_features:
                 out = [out]
